@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    #suggestions {
+        position: absolute; /* Позиционирование относительно родительского элемента */
+        background-color: white; /* Фон списка подсказок */
+        border: 1px solid #ccc; /* Рамка */
+
+        max-height: 200px; /* Максимальная высота списка */
+        overflow-y: auto; /* Прокрутка, если элементов больше, чем помещается */
+        width: calc(100% - 2px); /* Ширина равная ширине поля ввода */
+    }
+    .list-group-item {
+        cursor: pointer; 
+    }
+    .list-group-item:hover {
+        background-color: #f0f0f0;
+    }
+</style>
+
+
+<div class="container mt-4">
+    <h2>Информация об аккаунте</h2>
+    <div class="form-group" style="position: relative;">
+        <label for="delivery_address">Адрес доставки:</label>
+        <input type="text" id="delivery_address" value="{{ user.delivery_address }}" class="form-control" placeholder="Введите адрес доставки">
+        <ul id="suggestions" class="list-group mt-2" style="display:none;"></ul>
+    </div>
+    <table class="table">
+        <tr>
+            <th>Имя:</th>
+            <td>{{ user.name }}</td>
+        </tr>
+        <tr>
+            <th>Email:</th>
+            <td>{{ user.email }}</td>
+        </tr>
+        <tr>
+            <th>Номер телефона:</th>
+            <td>{{ user.phone_number }}</td>
+        </tr>
+    </table>
+
+    <a href="{{ url_for('view_orders') }}" class="btn btn-primary">Просмотреть заказы</a>
+    <button id="save_address" class="btn btn-success">Сохранить адрес</button>
+</div>
+
+<script>
+    const apiKey = '082c4be693c34c449aa841bbca21b547'; 
+
+    document.getElementById('delivery_address').addEventListener('input', function() {
+        const address = this.value;
+
+        if (address.length > 2) { 
+            fetch(`https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(address)}&apiKey=${apiKey}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Ошибка API');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const suggestions = document.getElementById('suggestions');
+                    suggestions.innerHTML = ''; 
+                    suggestions.style.display = 'none'; 
+
+                    if (data.features && data.features.length > 0) {
+                        data.features.forEach(feature => {
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item';
+                            li.textContent = feature.properties.formatted; 
+                            li.onclick = () => {
+                                document.getElementById('delivery_address').value = feature.properties.formatted;
+                                suggestions.style.display = 'none'; 
+                            };
+                            suggestions.appendChild(li);
+                        });
+                        suggestions.style.display = 'block';
+                    }
+                })
+                .catch(error => console.error('Ошибка при запросе:', error));
+        } else {
+            document.getElementById('suggestions').style.display = 'none'; 
+        }
+    });
+
+    document.getElementById('save_address').addEventListener('click', function() {
+    const address = document.getElementById('delivery_address').value;
+
+    fetch('/save_address', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ delivery_address: address })
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('Адрес успешно сохранен!');
+        } else {
+            alert('Ошибка при сохранении адреса.');
+        }
+    })
+    .catch(error => console.log('error', error));
+});
+</script>
+{% endblock %}

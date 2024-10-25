@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <style>
+        .card {
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <form method="get" action="{{ url_for('index') }}" class="mb-2 d-flex flex-wrap">
+                    <div class="input-group mb-2 flex-grow-1">
+                        <input type="text" id="psear" name="psear" class="form-control" 
+                            placeholder="Поиск..." 
+                            value="{{ request.args.get('psear', '') }}">
+                        <button class="btn btn-outline-secondary" type="submit" id="button-addon2">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3">
+                <h4>Категории</h4>
+                <div class="list-group sidebar">
+                    <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action">
+                        Сбросить
+                    </a>
+                    {% for category in cats %}
+                        <a href="{{ url_for('index', category_id=category.id) }}" class="list-group-item list-group-item-action">
+                            {{ category.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                {% if drugs.items %}
+                    <div class="row">
+                        {% for drug in drugs.items %}
+                            <div class="col-md-4 mb-4">
+                                <a href="{{ url_for('view_drug', drug_id=drug.id) }}" class="text-decoration-none text-dark"></a>
+                                    <div class="card d-flex flex-column h-100">
+                                        
+                                        {% if drug.images %}
+                                            <a href="{{ url_for('view_drug', drug_id=drug.id) }}" class="text-decoration-none text-dark">
+                                                <img src="{{ url_for('static', filename='images/' + drug.images[0].image_hash) }}" 
+                                                    class="card-img-top" 
+                                                    alt="{{ drug.name }}" 
+                                                    style="height: 200px; object-fit: cover;">
+                                            </a>
+                                        {% endif %}
+                                        <div class="card-body d-flex flex-column">
+                                            <h5 class="card-title">{{ drug.name }}</h5>
+                                            <p class="card-text">Цена: {{ drug.price }} руб.</p>
+                                            <p class="card-text">Остаток на складе: {{ drug.stock }} шт.</p>
+                                        </div>
+                                        
+                                        {% if not cart[drug.id|string] %}
+                                            <button class="btn btn-primary add-to-cart mb-3" data-drug-id="{{ drug.id }}">Добавить в корзину</button>
+                                        {% else %}
+                                            <div class="input-group mb-3">
+                                                <button class="btn btn-outline-secondary decrease" data-drug-id="{{ drug.id }}">-</button>
+                                                <input type="number" class="form-control quantity" 
+                                                    data-drug-id="{{ drug.id }}" 
+                                                    value="{{ cart[drug.id|string] }}" 
+                                                    readonly>
+                                                <button class="btn btn-outline-secondary increase" data-drug-id="{{ drug.id }}">+</button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-auto">
+                        <nav>
+                            <ul class="pagination">
+                                {% if drugs.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('index', page=drugs.prev_num, **request.args) }}">Предыдущая</a>
+                                    </li>
+                                {% endif %}
+                                {% for page_num in drugs.iter_pages() %}
+                                    {% if page_num %}
+                                        <li class="page-item {% if page_num == drugs.page %}active{% endif %}">
+                                            <a class="page-link" href="{{ url_for('index', page=page_num, **request.args) }}">{{ page_num }}</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if drugs.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('index', page=drugs.next_num, **request.args) }}">Следующая</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% else %}
+                    <p>Ничего не найдено.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    $(document).ready(function() {
+    $(document).on('click', '.add-to-cart', function() {
+        var drugId = $(this).data('drug-id');
+        var card = $(this).closest('.card');
+
+        $.ajax({
+            url: "{{ url_for('add_to_cart', drug_id='0') }}".replace('0', drugId),
+            method: "POST",
+            success: function(response) {
+                card.find('.add-to-cart').remove();
+                card.append(`
+                    <div class="input-group mb-3">
+                        <button class="btn btn-outline-secondary decrease" data-drug-id="${drugId}">-</button>
+                        <input type="number" class="form-control quantity" data-drug-id="${drugId}" value="${response.quantity}" readonly>
+                        <button class="btn btn-outline-secondary increase" data-drug-id="${drugId}">+</button>
+                    </div>
+                `);
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', error);
+            }
+        });
+    });
+
+    $(document).on('click', '.increase', function() {
+        var drugId = $(this).data('drug-id');
+        var card = $(this).closest('.card');
+
+        $.ajax({
+            url: "{{ url_for('update_cart', drug_id='0') }}".replace('0', drugId) + '?action=increase',
+            method: "POST",
+            success: function(response) {
+                card.find('.quantity[data-drug-id="' + drugId + '"]').val(response.quantity);
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', error);
+            }
+        });
+    });
+
+    $(document).on('click', '.decrease', function() {
+        var drugId = $(this).data('drug-id');
+        var card = $(this).closest('.card');
+
+        $.ajax({
+            url: "{{ url_for('update_cart', drug_id='0') }}".replace('0', drugId) + '?action=decrease',
+            method: "POST",
+            success: function(response) {
+                var quantityInput = card.find('.quantity[data-drug-id="' + drugId + '"]');
+                quantityInput.val(response.quantity);
+
+                if (response.quantity === 0) {
+                    card.find('.input-group').remove();
+                    card.append(`
+                        <button class="btn btn-primary add-to-cart mb-3" data-drug-id="${drugId}">Добавить в корзину</button>
+                    `);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', error);
+            }
+        });
+    });
+    });
+    </script>
+{% endblock %}

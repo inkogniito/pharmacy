@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mt-4 mb-4">
+        <h2 class="text-center">{{ drug.name }}</h2>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <p><strong>Описание:</strong> {{ drug.description }}</p>
+                                <p><strong>Цена:</strong> {{ drug.price }} руб.</p>
+                                <p><strong>Остаток на складе:</strong> {{ drug.stock }} шт.</p>
+                                <p><strong>Категория:</strong> {{ drug.category.name }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <div id="imageCarousel" class="carousel slide mt-2 mb-2" data-bs-ride="carousel">
+                                    <div class="carousel-inner">
+                                        {% for image in drug.images %}
+                                            <div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
+                                                <img src="{{ url_for('static', filename='images/' + image.image_hash) }}" 
+                                                    class="d-block w-100"    
+                                                    alt="{{ drug.name }}">
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Previous</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Next</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Назад к списку</a>
+                    {% if has_role('Администратор') %}
+                        <a href="{{ url_for('edit_drug', drug_id=drug.id) }}" class="btn btn-primary">Изменить препарат</a>
+                        <a href="{{ url_for('delete_drug', drug_id=drug.id) }}" class="btn btn-danger">Удалить препарат</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

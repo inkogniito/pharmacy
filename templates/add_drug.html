@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h3>Добавить препарат</h3>
+    <div class="container mt-2 mb-2">
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <div class="form-group mb-3">
+                {{ form.name.label(class="form-label") }}
+                {{ form.name(class="form-control") }}
+            </div>
+            <div class="form-group mb-3">
+                {{ form.description.label(class="form-label") }}
+                {{ form.description(class="form-control", rows=3) }}
+            </div>
+            <div class="form-group mb-3">
+                {{ form.price.label(class="form-label") }}
+                {{ form.price(class="form-control") }}
+            </div>
+            <div class="form-group mb-3">
+                {{ form.stock.label(class="form-label") }}
+                {{ form.stock(class="form-control") }}
+            </div>
+            <div class="form-group mb-3">
+                {{ form.images.label(class="form-label") }}
+                {{ form.images(class="form-control-file", multiple=True) }}
+            </div>
+            <div class="form-group mb-3">
+                {{ form.category_id.label(class="form-label") }}
+                <select class="form-control" name="category_id" id="category">
+                    {% for value, label in form.category_id.choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {{ form.submit(class="btn btn-primary mb-3") }}
+            <a href="{{ url_for('index') }}" class="btn btn-secondary mb-3">Назад</a>
+        </form>
+    </div>
+{% endblock %}

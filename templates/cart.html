@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Корзина</h2>
+    {% if cart_items %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Название товара</th>
+                    <th>Количество</th>
+                    <th>Цена за единицу</th>
+                    <th>Итоговая цена</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                    <tr>
+                        <td>{{ item.drug.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.drug.price }} руб.</td>
+                        <td>{{ item.total_price }} руб.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h4>Итоговая стоимость: {{ total_price }} руб.</h4>
+    {% else %}
+        <p>Ваша корзина пуста.</p>
+    {% endif %}
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">Продолжить покупки</a>
+    <a href="{{ url_for('clear_cart')}}" class="btn btn-secondary">Очистить корзину</a>
+    {% if current_user.is_authenticated %}
+        <a href="{{ url_for('create_order') }}" class="btn btn-success">Оформить заказ</a>
+    {% else %}
+        <a href="{{ url_for('login') }}" class="btn btn-success">Войдите чтобы оформить заказ</a>
+    {% endif %}
+</div>
+{% endblock %}

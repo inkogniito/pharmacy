@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h3>Редактирование препарата: {{ drug.name }}</h3>
+<form method="POST" enctype="multipart/form-data" class="row mt-4 mb-4">
+    {{ form.hidden_tag() }}
+
+    <div class="col-md-8">
+        <div class="form-group mb-3">
+            {{ form.name.label(class="form-label") }}
+            {{ form.name(class="form-control") }}
+        </div>
+        <div class="form-group mb-3">
+            {{ form.description.label(class="form-label") }}
+            {{ form.description(class="form-control", rows=3) }}
+        </div>
+        <div class="form-group mb-3">
+            {{ form.price.label(class="form-label") }}
+            {{ form.price(class="form-control") }}
+        </div>
+        <div class="form-group mb-3">
+            {{ form.stock.label(class="form-label") }}
+            {{ form.stock(class="form-control") }}
+        </div>
+        <div class="form-group mb-3">
+            {{ form.category_id.label(class="form-label") }}
+            {{ form.category_id(class="form-control") }}
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Сохранить изменения</button>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary mt-2">Назад</a>
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-group">
+            <label for="images" class="form-label">Новые изображения:</label>
+            <input type="file" name="images" multiple class="form-control">
+        </div>
+        
+        <div id="imageCarousel" class="carousel slide mt-2 mb-2">
+            <div class="carousel-inner">
+                {% for image in drug.images %}
+                    <div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
+                        <img src="{{ url_for('static', filename='images/' + image.image_hash) }}" 
+                            class="d-block w-100"    
+                            alt="{{ drug.name }}">
+                        <div class="carousel-caption d-none d-md-block">
+                            
+                            <button type="submit" name="delete_image" 
+                                value="{{ image.id }}" class="btn btn-danger">Удалить</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
