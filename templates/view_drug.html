@@ -9,11 +9,24 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-8">
+                            <div class="col-md-8 placetoadd">
                                 <p><strong>Описание:</strong> {{ drug.description }}</p>
                                 <p><strong>Цена:</strong> {{ drug.price }} руб.</p>
                                 <p><strong>Остаток на складе:</strong> {{ drug.stock }} шт.</p>
                                 <p><strong>Категория:</strong> {{ drug.category.name }}</p>
+                                {% if not cart[drug.id|string] %}
+                                    <button class="btn btn-primary add-to-cart mb-3" data-drug-id="{{ drug.id }}">Добавить в корзину</button>
+                                {% else %}
+                                    <div class="input-group mb-3">
+                                        <button class="btn btn-outline-secondary decrease" data-drug-id="{{ drug.id }}">-</button>
+                                        <input type="number" class="form-control quantity" 
+                                            data-drug-id="{{ drug.id }}" 
+                                            value="{{ cart[drug.id|string] }}" 
+                                            style="max-width: 120px;"
+                                            readonly>
+                                        <button class="btn btn-outline-secondary increase" data-drug-id="{{ drug.id }}">+</button>
+                                    </div>
+                                {% endif %}
                             </div>
                             <div class="col-md-4">
                                 <div id="imageCarousel" class="carousel slide mt-2 mb-2" data-bs-ride="carousel">
@@ -46,7 +59,76 @@
                         <a href="{{ url_for('delete_drug', drug_id=drug.id) }}" class="btn btn-danger">Удалить препарат</a>
                     {% endif %}
                 </div>
+                
             </div>
         </div>
     </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $(document).on('click', '.add-to-cart', function() {
+                var drugId = $(this).data('drug-id');
+                var card = $(this).closest('.placetoadd');
+        
+                $.ajax({
+                    url: "{{ url_for('add_to_cart', drug_id='0') }}".replace('0', drugId),
+                    method: "POST",
+                    success: function(response) {
+                        card.find('.add-to-cart').remove();
+                        card.append(`
+                            <div class="input-group mb-3">
+                                <button class="btn btn-outline-secondary decrease" data-drug-id="${drugId}">-</button>
+                                <input type="number" class="form-control quantity" data-drug-id="${drugId}" value="${response.quantity}" style="max-width: 120px;" readonly>
+                                <button class="btn btn-outline-secondary increase" data-drug-id="${drugId}">+</button>
+                            </div>
+                        `);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                    }
+                });
+            });
+        
+            $(document).on('click', '.increase', function() {
+                var drugId = $(this).data('drug-id');
+                var card = $(this).closest('.placetoadd');
+        
+                $.ajax({
+                    url: "{{ url_for('update_cart', drug_id='0') }}".replace('0', drugId) + '?action=increase',
+                    method: "POST",
+                    success: function(response) {
+                        card.find('.quantity[data-drug-id="' + drugId + '"]').val(response.quantity);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                    }
+                });
+            });
+        
+            $(document).on('click', '.decrease', function() {
+                var drugId = $(this).data('drug-id');
+                var card = $(this).closest('.placetoadd');
+        
+                $.ajax({
+                    url: "{{ url_for('update_cart', drug_id='0') }}".replace('0', drugId) + '?action=decrease',
+                    method: "POST",
+                    success: function(response) {
+                        var quantityInput = card.find('.quantity[data-drug-id="' + drugId + '"]');
+                        quantityInput.val(response.quantity);
+        
+                        if (response.quantity === 0) {
+                            card.find('.input-group').remove();
+                            card.append(`
+                                <button class="btn btn-primary add-to-cart mb-3" data-drug-id="${drugId}">Добавить в корзину</button>
+                            `);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                    }
+                });
+            });
+        });
+        </script>
 {% endblock %}

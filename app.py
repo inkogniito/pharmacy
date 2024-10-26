@@ -166,7 +166,8 @@ def allowed_file(filename):
 @app.route('/drug/<int:drug_id>')
 def view_drug(drug_id):
     drug_item = Drug.query.get_or_404(drug_id)
-    return render_template('view_drug.html', drug=drug_item)
+    cart = session.get('cart', {})
+    return render_template('view_drug.html', drug=drug_item, cart=cart)
 
 
 @app.route('/drug/edit/<int:drug_id>', methods=['GET', 'POST'])
@@ -406,6 +407,7 @@ def save_address():
     data = request.get_json()
     current_user.delivery_address = data['delivery_address']
     db.session.commit() 
+
     return jsonify(success=True)
 
 @app.route('/clear_cart')
