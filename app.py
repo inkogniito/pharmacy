@@ -21,7 +21,7 @@ def hash_file(file):
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Root123!@localhost/farm'
 app.config['SQLALCHEMY_ECHO'] = False
-app.config['SECRET_KEY'] = '223dseww323redw32rfgvw2wcvgf3vg3'
+app.config['SECRET_KEY'] = os.urandom(36).hex()
 
 login_manager = LoginManager()
 login_manager.init_app(app)
